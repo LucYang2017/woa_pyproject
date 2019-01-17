@@ -11,6 +11,7 @@ import basic_functions as bf
 import robotic_active_olfaction as rao
 from configs import *
 import time
+import numpy as np
 
 
 def source_localization(agents_no, finding_threshold, tracing_threshold):
@@ -24,17 +25,13 @@ def source_localization(agents_no, finding_threshold, tracing_threshold):
     # agents, leader = init_agents_random(agents_no, c_field)
 
     while len(leader.history) < COUNTER_MAX and (not SUCCESS):
-        print('step no. %d' % (len(leader.history)))
         if state == 0:
             while len(leader.history) < COUNTER_MAX:
-                print('step no. %d' % (len(leader.history)))
                 t = len(leader.history) * 2
                 if t >= 200:
                     t = 200
                 c_field = field.load_field(t)
                 agents, leader = rao.plume_finding(agents, leader, c_field)
-                # bf.save_trajectory(agents, leader, serial_no)
-                # bf.save_results(agents, leader, serial_no, finding_end)
                 # bf.show_info(agents, leader, t, state)
                 if leader.concentration > finding_threshold:
                     state = 1
@@ -42,13 +39,11 @@ def source_localization(agents_no, finding_threshold, tracing_threshold):
             finding_end = len(leader.history)
         elif state == 1:
             while len(leader.history) < COUNTER_MAX:
-                print('step no. %d' % (len(leader.history)))
                 t = len(leader.history) * 2
                 if t >= 200:
                     t = 200
                 c_field = field.load_field(t)
                 agents, leader = rao.plume_tracking(agents, leader, c_field)
-
                 if leader.concentration > tracing_threshold:
                     SUCCESS = True
                     break
@@ -58,26 +53,24 @@ def source_localization(agents_no, finding_threshold, tracing_threshold):
                     break
         elif state == 2:
             while len(leader.history) < COUNTER_MAX:
-                print('step no. %d' % (len(leader.history)))
                 t = len(leader.history) * 2
                 if t >= 200:
                     t = 200
                 c_field = field.load_field(t)
                 agents, leader = rao.plume_finding(agents, leader, c_field)
-                # bf.save_trajectory(agents, leader, serial_no)
-                # bf.save_results(agents, leader, serial_no, finding_end)
-                # bf.show_info(agents, leader, t, state)
                 if leader.concentration > local_maximum + 0.05:
                     state = 1
                     break
-
-                # bf.save_trajectory(agents, leader, serial_no)
-                # bf.save_results(agents, leader, serial_no, finding_end)
                 # bf.show_info(agents, leader, t, state)
     tracing_end = len(leader.history)
 
-    bf.save_trajectory(agents, leader, serial_no)
-    bf.save_results(agents, leader, serial_no, finding_end)
+    if np.linalg.norm(leader.history[-1][0] - np.array([0, -0.3, 1.3])) < 0.6:
+        SUCCESS = True
+    else:
+        SUCCESS = False
+
+    # bf.save_trajectory(agents, leader, serial_no)
+    # bf.save_results(agents, leader, serial_no, finding_end)
 
     return finding_end, tracing_end, SUCCESS
 
@@ -89,28 +82,25 @@ def source_localization_2d(agents_no, finding_threshold, tracing_threshold, heig
     c_field = field.load_field(t)
     finding_end = COUNTER_MAX
     serial_no = str(time.strftime("%Y%m%d-%H%M%S", time.localtime()))
-    agents, leader = agent.init_agents_fixed(agents_no, c_field, [-1, -1, height])
+    agents, leader = agent.init_agents_fixed(agents_no, c_field, [-2, -2, height])
     # agents, leader = init_agents_random(agents_no, c_field)
 
     while len(leader.history) < COUNTER_MAX and (not SUCCESS):
-        print('step no. %d' % (len(leader.history)))
         if state == 0:
             while len(leader.history) < COUNTER_MAX:
-                print('step no. %d' % (len(leader.history)))
                 t = len(leader.history) * 2
                 if t >= 200:
                     t = 200
                 c_field = field.load_field(t)
                 agents, leader = rao.plume_finding_2d(agents, leader, c_field, height)
 
-                bf.show_info(agents, leader, t, state)
+                # bf.show_info(agents, leader, t, state)
                 if leader.concentration > finding_threshold:
                     state = 1
                     break
             finding_end = len(leader.history)
         elif state == 1:
             while len(leader.history) < COUNTER_MAX:
-                print('step no. %d' % (len(leader.history)))
                 t = len(leader.history) * 2
                 if t >= 200:
                     t = 200
@@ -127,7 +117,6 @@ def source_localization_2d(agents_no, finding_threshold, tracing_threshold, heig
                     break
         elif state == 2:
             while len(leader.history) < COUNTER_MAX:
-                print('step no. %d' % (len(leader.history)))
                 t = len(leader.history) * 2
                 if t >= 200:
                     t = 200
@@ -135,10 +124,18 @@ def source_localization_2d(agents_no, finding_threshold, tracing_threshold, heig
                 agents, leader = rao.plume_finding_2d(agents, leader, c_field, height)
 
                 bf.show_info(agents, leader, t, state)
-                if leader.concentration > local_maximum + 0.05:
+                if leader.concentration > tracing_threshold:
+                    SUCCESS = True
+                    break
+                if leader.concentration > local_maximum + (tracing_threshold * 0.1):
                     state = 1
                     break
     tracing_end = len(leader.history)
+
+    if np.linalg.norm(leader.history[-1][0] - np.array([0, -0.3, height])) < 0.3:
+        SUCCESS = True
+    else:
+        SUCCESS = False
 
     bf.save_trajectory(agents, leader, serial_no)
     bf.save_results(agents, leader, serial_no, finding_end)
@@ -149,15 +146,18 @@ def source_localization_2d(agents_no, finding_threshold, tracing_threshold, heig
 if __name__ == "__main__":
 
     success = 0
+    step_consuming = []
     for i in range(100):
-        # finding_end, tracing_end, success_flag = source_localization(agents_no=5,
-        #                                                              finding_threshold=0.2,
-        #                                                              tracing_threshold=0.6)
-        finding_end, tracing_end, success_flag = source_localization_2d(agents_no=5,
-                                                                        finding_threshold=0.2,
-                                                                        tracing_threshold=0.35,
-                                                                        height=0.5)
-        if tracing_end < COUNTER_MAX:
+        finding_end, tracing_end, success_flag = source_localization(agents_no=5,
+                                                                     finding_threshold=10,
+                                                                     tracing_threshold=1000)
+        # finding_end, tracing_end, success_flag = source_localization_2d(agents_no=6,
+        #                                                                 finding_threshold=10,
+        #                                                                 tracing_threshold=5000,
+        #                                                                 height=1.3)
+        if success_flag:
             success += 1
-        print(i)
-    print(success)
+        step_consuming.append(tracing_end)
+        print('Trial no. %d' % (i))
+    print("The success rate is %d%%" % (success))
+    print("The average step is %d" % (sum(step_consuming) / len(step_consuming)))

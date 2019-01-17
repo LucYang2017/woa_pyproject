@@ -48,14 +48,14 @@ def generate_raw_field(file_name):
         y_coordinate = round(scinum_2_float(msg[1]), 2)
         z_coordinate = round(scinum_2_float(msg[2]), 2)
         position = [x_coordinate, y_coordinate, z_coordinate]
-        concentration = [round(scinum_2_float(msg[-1]), 3)]
+        concentration = [scinum_2_float(msg[-1]) * pow(10, 5)]
         node = position + concentration
         raw_field.append(node)
     return np.array(raw_field)
 
 
 def generate_empty_grid(accuracy):
-    grid = []
+    empty_grid = []
     x_max = round(X_MAX, 2)
     x_min = round(X_MIN, 2)
     y_max = round(Y_MAX, 2)
@@ -64,31 +64,33 @@ def generate_empty_grid(accuracy):
     z_min = round(Z_MIN, 2)
 
     def start_end(min, max, accuracy):
-        if min <= 0:
-            start = int(min / accuracy) * accuracy
-        else:
-            start = (int(min / accuracy) + 1) * accuracy
-
-        if max <= 0:
-            end = (int(max / accuracy) - 1) * accuracy
-        else:
-            end = int(max / accuracy) * accuracy
+        import math
+        left_boundary = math.floor(int(min / accuracy)) - 1
+        right_boundary = math.floor(int(max / accuracy)) + 1
+        x = []
+        for i in range(left_boundary, right_boundary + 1):
+            if min <= round(i * accuracy, 2) <= max:
+                x.append(round(i * accuracy, 2))
+        x = sorted(x)
+        start = x[0]
+        end = x[-1]
         return round(start, 2), round(end, 2)
 
     x_start, x_end = start_end(x_min, x_max, accuracy)
     y_start, y_end = start_end(y_min, y_max, accuracy)
     z_start, z_end = start_end(z_min, z_max, accuracy)
+    xi = np.arange(x_start, x_end + accuracy, accuracy)
+    yi = np.arange(y_start, y_end + accuracy, accuracy)
+    zi = np.arange(z_start, z_end + accuracy, accuracy)
+    print(len(xi))
+    print(len(yi))
+    print(len(zi))
+    for i in xi:
+        for j in yi:
+            for k in zi:
+                empty_grid.append([round(i, 2), round(j, 2), round(k, 2)])
 
-    for i in np.arange(x_start, x_end + accuracy, accuracy):
-        for j in np.arange(y_start, y_end + accuracy, accuracy):
-            for k in np.arange(z_start, z_end + accuracy, accuracy):
-                grid.append([round(i, 3), round(j, 3), round(k, 3)])
-                # print(grid[-1])
-
-    # print('%f %f %f %f %f %f' % (x_start, x_end, y_start, y_end, z_start, z_end))
-    # print(np.array(grid))
-
-    return np.array(grid)
+    return np.array(empty_grid)
 
 
 def generate_field(raw_field, empty_grid):
@@ -117,9 +119,9 @@ def query_c(positions, field):
     z_max = field[-1][2]
     z_min = field[0][2]
 
-    x_total = (x_max - x_min) / accuracy + 1
-    y_total = (y_max - y_min) / accuracy + 1
-    z_total = (z_max - z_min) / accuracy + 1
+    x_total = int((x_max - x_min) / accuracy + 1)
+    y_total = int((y_max - y_min) / accuracy + 1)
+    z_total = int((z_max - z_min) / accuracy + 1)
 
     c_array = []
 
@@ -132,20 +134,22 @@ def query_c(positions, field):
             if d <= d_min:
                 d_min = d
                 nearest_coordinate_value = i
-        return nearest_coordinate_value
+        return round(nearest_coordinate_value, 2)
 
     for position in positions:
-
         x = get_nearest_coordinate_value(position[0], x_min, x_max)
         y = get_nearest_coordinate_value(position[1], y_min, y_max)
         z = get_nearest_coordinate_value(position[2], z_min, z_max)
-        x_counter = (x - x_min) / accuracy + 1
-        y_counter = (y - y_min) / accuracy + 1
-        z_counter = (z - z_min) / accuracy + 1
-        c_index = int((x_counter - 1) * y_total * z_total + (y_counter - 1) * z_total + z_counter)
+        x_counter = round((x - x_min) / accuracy + 1, 0)
+        y_counter = round((y - y_min) / accuracy + 1, 0)
+        z_counter = round((z - z_min) / accuracy + 1, 0)
+        c_index = int((x_counter - 1) * y_total * z_total + (y_counter - 1) * z_total + z_counter) - 1
         c = field[c_index]
         # if np.linalg.norm(c[:3] - np.array(position)) > accuracy * 1.7321:
         if round(np.linalg.norm(c[:3] - np.array([x, y, z])), 3) != 0:
+            print_colors.red('ATTENTION !! This position is far away from the supposed position!!')
+            print(np.array([x, y, z]))
+            print(c[:3])
             for i in range(len(field)):  # 防止出现不对的情况
                 if np.linalg.norm(field[i][:3] - np.array([x, y, z])) == 0:
                     c_index = i
@@ -158,7 +162,6 @@ def query_c(positions, field):
             print_colors.red('Formed position:\t%s' % ([x, y, z]))
             print_colors.red('Out position:\t\t%s' % (c[:3]))
 
-        # print('%f %f %f %d' % (x, y, z, c_index))
         if np.isnan(c[-1]):
             c[-1] = 0
         c_array.append(c[-1])
@@ -179,10 +182,5 @@ def load_field(file_name):
     import pickle as p
     f = open('field/' + str(FIELD_TYPE) + '/' + str(file_name) + '.data', 'rb')
     return p.load(f)
-
-
-
-
-
 
 

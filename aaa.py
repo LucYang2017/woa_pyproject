@@ -9,36 +9,21 @@ import matplotlib.pyplot as plt
 import field
 import numpy as np
 
-nodes = field.load_field(17)
-plane = []
-for node in nodes:
-    if node[2] == 0.5:
-        plane.append(node)
-plane = np.array(plane)
 
-X = np.arange(-2.2, 2.2, 0.05)
-Y = np.arange(-2.6, 2.8, 0.05)
-
-
-X_GRID, Y_GRID = np.meshgrid(X, Y)
-Z_GRID = np.empty((len(X), len(Y)))
-for i in range(len(X)):
-    for j in range(len(Y)):
-        xx = float(round(X[i], 2))
-        yy = float(round(Y[j], 2))
-        zz = 0.05
-        positions = np.array([[xx, yy, zz]])
-        Z_GRID[i, j] = field.query_c(positions=positions, field=nodes)
+def start_end(min, max, accuracy):
+    import math
+    left_boundary = math.floor(int(min / accuracy)) - 1
+    right_boundary = math.floor(int(max / accuracy)) + 1
+    x = []
+    for i in range(left_boundary, right_boundary + 1):
+        if min  <= round(i * accuracy, 2) <= max:
+            x.append(round(i * accuracy, 2))
+    x = sorted(x)
+    start = x[0]
+    end = x[-1]
+    return round(start, 2), round(end, 2)
 
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-
-# Grab some test data.
-
-
-# Plot a basic wireframe.
-# ax.plot_wireframe(X, Y, Z, rstride=10, cstride=10)
-ax.plot_wireframe(X_GRID, Y_GRID, Z_GRID.T, rstride=10, cstride=10)
-
-plt.show()
+a, b = start_end(1.100000001, 2.95000001, 0.05)
+print(a)
+print(b)

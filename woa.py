@@ -32,13 +32,13 @@ def woa_3d(agents, leader):
         if p < 0.5:
             if abs(A) < 1:
                 choice = 0
-                D = abs(C * leader.position - agent.position)
+                D =  abs(C *leader.position - agent.position)
                 new_position = leader.position - A * D + c_gradient
             elif abs(A) >= 1:
                 choice = 1
                 random_agent_no = random.randint(0, agents_no - 1)
                 random_agent = agents[random_agent_no]
-                D = abs(C * random_agent.position - agent.position)
+                D =  abs(C *random_agent.position - agent.position)
                 new_position = random_agent.position - A * D + c_gradient
         elif p >= 0.5:
             choice = 2
@@ -62,7 +62,7 @@ def woa_3d(agents, leader):
         #         agents.index(agent), a, p, str(A), str(C), str(D), choice))
         # print_colors.yellow('last_position %s ' % (str(agent.position)))
         # print_colors.yellow('new_position_before_check_boundary %s ' % (str(new_position)))
-        new_position = basic_functions.check_boundary_3d_tracking(new_position)
+        new_position = basic_functions.check_boundary_3d_finding(new_position)
         # print_colors.yellow('new_position_after_check_boundary %s ' % (str(new_position)))
         agent.position = new_position
     return agents
@@ -88,13 +88,13 @@ def woa_2d(agents, leader, height):
         if p < 0.5:
             if abs(A) < 1:
                 choice = 0
-                D = abs(C * leader.position - agent.position)
+                D = C * abs(leader.position - agent.position)
                 new_position = leader.position - A * D + c_gradient
             elif abs(A) >= 1:
                 choice = 1
                 random_agent_no = random.randint(0, agents_no - 1)
                 random_agent = agents[random_agent_no]
-                D = abs(C * random_agent.position - agent.position)
+                D = C * abs(random_agent.position - agent.position)
                 new_position = random_agent.position - A * D + c_gradient
         elif p >= 0.5:
             choice = 2
