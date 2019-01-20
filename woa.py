@@ -10,13 +10,17 @@ import random
 import math
 import basic_functions
 import numpy as np
+import field
 
 
 def woa_3d(agents, leader):
     agents_no = len(agents)
     counter = len(leader.history)
+    airflow_field = field.load_airflow_field()
     for agent in agents:
-
+        v = field.query_v(positions=[agent.position], airflow_field=airflow_field)
+        v = v[0]
+        # v = np.array([0, 0, 0])
         c_gradient = np.array([0, 0, 0])
         # if counter > 0:
         #     c_gradient = agent.position - agent.history[-1][0]
@@ -32,20 +36,20 @@ def woa_3d(agents, leader):
         if p < 0.5:
             if abs(A) < 1:
                 choice = 0
-                D =  abs(C *leader.position - agent.position)
-                new_position = leader.position - A * D + c_gradient
+                D = C *abs( leader.position - agent.position)
+                new_position = leader.position - A * D + c_gradient - v
             elif abs(A) >= 1:
                 choice = 1
                 random_agent_no = random.randint(0, agents_no - 1)
                 random_agent = agents[random_agent_no]
-                D =  abs(C *random_agent.position - agent.position)
-                new_position = random_agent.position - A * D + c_gradient
+                D =C * abs(random_agent.position - agent.position)
+                new_position = random_agent.position - A * D + c_gradient - v
         elif p >= 0.5:
             choice = 2
             D = abs(leader.position - agent.position)
             b = 1  # 用来定义螺旋大小的常数
             l = random.uniform(-1, 1)
-            new_position = D * math.exp(b * l) * math.cos(2 * math.pi * l) + leader.position + c_gradient
+            new_position = D * math.exp(b * l) * math.cos(2 * math.pi * l) + leader.position + c_gradient - v
 
         if np.linalg.norm(new_position - agent.position) > STEP_LEN_TRACKING:
             new_position = agent.position + STEP_LEN_TRACKING * (new_position - agent.position) / np.linalg.norm(

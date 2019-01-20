@@ -14,15 +14,15 @@ import time
 import numpy as np
 
 
-def source_localization(agents_no, finding_threshold, tracing_threshold):
+def source_localization(agents_no, finding_threshold, tracing_threshold, start_position=[0, 0, 0]):
     SUCCESS = False
     state = 0
     t = 1
     c_field = field.load_field(t)
     finding_end = COUNTER_MAX
     serial_no = str(time.strftime("%Y%m%d-%H%M%S", time.localtime()))
-    agents, leader = agent.init_agents_fixed(agents_no, c_field, [-1, -1, 0.5])
-    # agents, leader = init_agents_random(agents_no, c_field)
+    agents, leader = agent.init_agents_fixed(agents_no, c_field, start_position)
+    # agents, leader = agent.init_agents_random(agents_no, c_field)
 
     while len(leader.history) < COUNTER_MAX and (not SUCCESS):
         if state == 0:
@@ -69,8 +69,8 @@ def source_localization(agents_no, finding_threshold, tracing_threshold):
     else:
         SUCCESS = False
 
-    # bf.save_trajectory(agents, leader, serial_no)
-    # bf.save_results(agents, leader, serial_no, finding_end)
+    bf.save_trajectory(agents, leader, serial_no)
+    bf.save_results(agents, leader, serial_no, finding_end)
 
     return finding_end, tracing_end, SUCCESS
 
@@ -147,10 +147,12 @@ if __name__ == "__main__":
 
     success = 0
     step_consuming = []
+    start_p = [2, -2, 0.5]
     for i in range(100):
         finding_end, tracing_end, success_flag = source_localization(agents_no=5,
                                                                      finding_threshold=10,
-                                                                     tracing_threshold=1000)
+                                                                     tracing_threshold=1000,
+                                                                     start_position=start_p)
         # finding_end, tracing_end, success_flag = source_localization_2d(agents_no=6,
         #                                                                 finding_threshold=10,
         #                                                                 tracing_threshold=5000,
@@ -159,5 +161,6 @@ if __name__ == "__main__":
             success += 1
         step_consuming.append(tracing_end)
         print('Trial no. %d' % (i))
+    print("The start position is %s" % (str(start_p)))
     print("The success rate is %d%%" % (success))
     print("The average step is %d" % (sum(step_consuming) / len(step_consuming)))
