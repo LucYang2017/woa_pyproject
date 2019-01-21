@@ -9,6 +9,7 @@
 import basic_functions as bf
 import woa
 import agent
+import tarcking_methods
 
 
 def plume_finding(agents, leader, c_field):
@@ -43,6 +44,16 @@ def plume_tracking(agents, leader, c_field):
 
 def plume_tracking_2d(agents, leader, c_field, height):
     agents = woa.woa_2d(agents, leader, height)
+    agents = agent.update_agents_c(agents, c_field)
+    agents = agent.update_agents_history(agents)
+    leader = agent.update_leader(agents, leader)
+    leader_age = agent.get_leader_age(leader)
+    # print('leader_age = %d' % (leader_age))
+    return agents, leader
+
+
+def plume_tracking_pso(agents, leader, c_field):
+    agents = tarcking_methods.pso_3d(agents, leader)
     agents = agent.update_agents_c(agents, c_field)
     agents = agent.update_agents_history(agents)
     leader = agent.update_leader(agents, leader)
